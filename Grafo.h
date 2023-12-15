@@ -41,7 +41,7 @@ public:
         return conexiones;
     }
 
-    void bellmanFord(int source) {
+    vector<int> bellmanFord(int source) {
         int numNodos = clientes.size() + servidores.size();
         vector<int> distancia(numNodos, numeric_limits<int>::max());
         vector<int> predecesor(numNodos, -1);
@@ -70,68 +70,124 @@ public:
 
             if (distancia[u] != numeric_limits<int>::max() && distancia[u] + peso < distancia[v]) {
                 cerr << "El grafo contiene ciclos negativos." << endl;
-                return;
+                return vector<int>();  // Retorna un vector vacío si hay ciclos negativos
             }
         }
 
-        // Imprimir distancias y rutas
-        for (int i = 0; i < numNodos; ++i) {
-            cout << "Desde el nodo " << source << " al nodo " << i << ": ";
-            if (distancia[i] == numeric_limits<int>::max()) {
-                cout << "No alcanzable";
-            } else {
-                cout << distancia[i];
-            }
-
-            // Imprimir ruta
-            cout << " [Ruta: ";
-            imprimirRuta(predecesor, i);
-            cout << "]" << endl;
-        }
-
+        // Devolver el vector de predecesores
+        return predecesor;
     }
-
     
 
     void enviarArchivo(int clienteId, int servidorId, int pesoArchivo) {
-        const int maxTamanoParte = 300;  // Tamaño máximo de cada parte en MB
-        const int velocidadConexion = 1000;  // Velocidad de conexión en MB por segundo
+        // Aplicar Bellman-Ford desde el cliente con id proporcionado
+        vector<int> predecesor = bellmanFord(clienteId);
 
-        int tiempoTotal = 0;
+        // Verificar si hay ciclos negativos
+        if (predecesor.empty()) {
+            cerr << "No se puede enviar el archivo debido a ciclos negativos." << endl;
+            return;
+        }
 
         // Calcular la cantidad total de partes que se enviarán
+        int velocidadMaxima = obtenerVelocidadMaxima(clienteId, servidorId);
+        const int maxTamanoParte = velocidadMaxima;  // Tamaño máximo de cada parte en MB
         int numPartesTotal = (pesoArchivo % maxTamanoParte == 0) ? pesoArchivo / maxTamanoParte : pesoArchivo / maxTamanoParte + 1;
 
         cout << "Enviando archivo desde el cliente " << clienteId << " al servidor " << servidorId << "..." << endl;
+
+        int tiempoTotal = 0;  // Variable para almacenar el tiempo total
 
         for (int i = 0; i < pesoArchivo; i += maxTamanoParte) {
             int tamanoParte = min(maxTamanoParte, pesoArchivo - i);
             int numPartes = (tamanoParte % maxTamanoParte == 0) ? tamanoParte / maxTamanoParte : tamanoParte / maxTamanoParte + 1;
 
-            // Calcular tiempo de conexión para cada parte
-            int tiempoConexion = numPartes / velocidadConexion;
-
             // Simular la conexión de cada parte al servidor
             for (int j = 0; j < numPartes; ++j) {
-                // Lógica para enviar la parte al servidor (simulado)
                 int parteActual = (i / maxTamanoParte) + j + 1;
                 cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde el cliente " << clienteId
-                    << " al servidor " << servidorId << "..." << endl;
+                    << " al servidor " << servidorId << "...";
 
-                // Simular el tiempo de conexión
-                cout << "Conexión establecida. Transfiriendo datos..." << endl;
-                for (int tiempo = 1; tiempo <= tiempoConexion; ++tiempo) {
-                    cout << "Tiempo transcurrido: " << tiempo << " segundo(s)." << endl;
+                if (j < numPartesTotal - 1) {  // Corregir la condición
+                    // Obtener nodo destino para la siguiente parte
+                    int siguienteNodo = obtenerServidorDestino(clienteId);
+
+                    // Imprimir ruta con tiempos
+                    cout << "Ruta: ";
+                    imprimirRutaConTiempos(predecesor, siguienteNodo);
+                    int tiempo = obtenerDistanciaEntreNodos(clienteId, siguienteNodo);
+                    cout << " (Tiempo: " << tiempo << " segundos)";
+
+                    // Sumar el tiempo al tiempo total
+                    tiempoTotal += tiempo;
                 }
-                cout << "Transferencia completa." << endl;
-            }
 
-            tiempoTotal += tiempoConexion;
+                cout << endl;
+            }
         }
 
-        // Imprimir el tiempo total de conexión
-        cout << "Archivo completo enviado en un tiempo total de " << tiempoTotal << " segundos." << endl;
+        // Imprimir mensaje de archivo completo enviado
+        cout << "Archivo completo enviado." << endl;
+
+        // Imprimir el tiempo total
+        cout << "Tiempo total: " << tiempoTotal << " segundos" << endl;
     }
+
+
+
+
+
+
+    // Dentro de la clase Grafo
+    int obtenerServidorDestino(int clienteId) const {
+        vector<int> servidoresDestino;
+
+        for (const Conexion& conexion : conexiones) {
+            if (conexion.getIdCliente() == clienteId) {
+                servidoresDestino.push_back(conexion.getIdServidor());
+            }
+        }
+
+        if (servidoresDestino.empty()) {
+            cerr << "No hay servidores destino disponibles para el cliente " << clienteId << "." << endl;
+            return -1; // Retorna un valor no válido
+        }
+
+        // Devuelve un servidor destino de forma aleatoria
+        return servidoresDestino[rand() % servidoresDestino.size()];
+    }
+    
+
+    int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
+        for (const Conexion& conexion : conexiones) {
+            if (conexion.getIdCliente() == nodoOrigen && conexion.getIdServidor() == nodoDestino) {
+                return conexion.getDistancia();
+            }
+        }
+        return -1; // Retorna un valor no válido si no hay conexión entre los nodos
+    }
+
+    void imprimirRutaConTiempos(const vector<int>& predecesor, int nodoActual) const {
+        if (nodoActual == -1) {
+            return;
+        }
+
+        // Obtener nodo anterior
+        int nodoAnterior = predecesor[nodoActual];
+
+        imprimirRutaConTiempos(predecesor, nodoAnterior);
+
+        if (nodoAnterior != -1) {
+            // Obtener la distancia entre nodos
+            int distancia = obtenerDistanciaEntreNodos(nodoAnterior, nodoActual);
+            cout << " -> (Tiempo: " << distancia << " segundos) -> ";
+        }
+
+        cout << nodoActual << " ";
+    }
+
+
+
 
 
 private:
@@ -139,13 +195,18 @@ private:
     std::vector<Servidor> servidores;
     std::vector<Conexion> conexiones;
 
-    void imprimirRuta(const vector<int>& predecesor, int nodoActual) const {
-        if (nodoActual == -1) {
-            return;
+    int obtenerVelocidadMaxima(int clienteId, int servidorId) const {
+        int velocidadMaxima = 0;
+
+        for (const Conexion& conexion : conexiones) {
+            if (conexion.getIdCliente() == clienteId && conexion.getIdServidor() == servidorId) {
+                velocidadMaxima = max(velocidadMaxima, conexion.getVelocidad());
+            }
         }
-        imprimirRuta(predecesor, predecesor[nodoActual]);
-        cout << nodoActual << " ";
+
+        return velocidadMaxima;
     }
+
 };
 
 #endif // GRAFO_H

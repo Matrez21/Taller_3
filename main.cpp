@@ -1,110 +1,101 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <ctime>
-#include <cstdlib>
 #include "Cliente.h"
 #include "Servidor.h"
 #include "Conexion.h"
 #include "Grafo.h"
 
 using namespace std;
-int main() {
-    srand(time(NULL));
-    ofstream archivo;
-    ofstream archivo2;
-    archivo2.open("conexiones.csv");
-    archivo.open("servidores.csv");
-    archivo<<"id,nombre,tipo"<<endl;
-    archivo2<<"idCliente,idServidor,velocidad,distancia"<<endl;
-    vector<string> cliente;
-    vector<string> servidor;
-    for (int i = 0; i < 300; i++) {
-        int num = i;
-        string nombre = "Servidor" + to_string(i);
-        int random = rand()%5+1;
-        string tipo;
-        if(random == 5){
-            tipo = "router";
-            servidor.push_back(to_string(i));
-            for(string client:cliente){
-                int random2 = rand()%10+1;
-                int velocidadrand = (rand()%3+1)*300;
-                archivo2<<client<<","<<i<<","<<velocidadrand<<","<<random2<<endl;
-            }
-            cliente.clear();
-        }else{
-            tipo="cliente";
-            cliente.push_back(to_string(i));
-        }
-        archivo << num << "," << nombre << "," << tipo << endl;
-    }
-    archivo.close();
-    for(int i = 0; i< servidor.size(); i++){
-        for(int j = i+1; j< servidor.size(); j++){
-            if(i!=j){
-                int moneda = rand()%4+1;
-                if(moneda == 1){
-                    int random = rand()%1000+1;
-                    int velocidad = (rand()%3+1)*1000;
-                    archivo2<<servidor[i]<<","<<servidor[j]<<","<<velocidad<<","<<random<<endl;
-                }
-            }
-        }
-        
-    }
-    archivo2.close();
 
+// Funciones para leer archivos CSV y construir el grafo
+Grafo construirGrafoDesdeArchivos(const string& archivoServidores, const string& archivoConexiones) {
     Grafo grafo;
 
-    // Generar clientes y agregar al grafo
-    for (int i = 0; i < 5; i++) {  // Reducido para demostración, ajusta según tus necesidades
-        Cliente cliente(i);
-        grafo.agregarCliente(cliente);
-    }
+    // Leer servidores
+    ifstream archivoServ(archivoServidores);
+    string lineaServ;
 
-    // Generar servidores y agregar al grafo
-    for (int i = 0; i < 5; i++) {  // Reducido para demostración, ajusta según tus necesidades
-        string nombre = "Servidor" + to_string(i);
-        int random = rand() % 5 + 1;
-        string tipo = (random == 5) ? "router" : "cliente";
-        Servidor servidor(i, nombre, tipo);
-        grafo.agregarServidor(servidor);
-    }
+    while (getline(archivoServ, lineaServ)) {
+        istringstream ss(lineaServ);
+        string token;
+        vector<string> tokens;
 
-    // Generar conexiones y agregar al grafo
-    for (int i = 0; i < grafo.getServidores().size(); i++) {
-        for (int j = i + 1; j < grafo.getServidores().size(); j++) {
-            if (i != j) {
-                int moneda = rand() % 4 + 1;
-                if (moneda == 1) {
-                    int random = rand() % 1000 + 1;
-                    int velocidad = (rand() % 3 + 1) * 1000;
-                    Conexion conexion(grafo.getClientes()[i].getId(), grafo.getServidores()[j].getId(), velocidad, random);
-                    grafo.agregarConexion(conexion);
-                }
-            }
+        while (getline(ss, token, ',')) {
+            tokens.push_back(token);
+        }
+
+        int id = stoi(tokens[0]);
+        string nombre = tokens[1];
+        string tipo = tokens[2];
+
+        if (tipo == "cliente") {
+            Cliente cliente(id);
+            grafo.agregarCliente(cliente);
+        } else if (tipo == "router") {
+            Servidor router(id, nombre, tipo);
+            grafo.agregarServidor(router);
         }
     }
 
-    // Aplicar Bellman-Ford desde el cliente con id 0
-    int sourceClienteId = 0;
-    grafo.bellmanFord(sourceClienteId);
+    // Leer conexiones
+    ifstream archivoConex(archivoConexiones);
+    string lineaConex;
 
-    // Enviar un archivo desde el cliente 0 al servidor 1 con un peso de 1200 MB
-    int pesoArchivo = 1200;
-    int servidorDestinoId = 1;
-    grafo.enviarArchivo(sourceClienteId, servidorDestinoId, pesoArchivo);
+    while (getline(archivoConex, lineaConex)) {
+        istringstream ss(lineaConex);
+        string token;
+        vector<string> tokens;
 
+        while (getline(ss, token, ',')) {
+            tokens.push_back(token);
+        }
 
+        int idCliente = stoi(tokens[0]);
+        int idServidor = stoi(tokens[1]);
+        int velocidad = stoi(tokens[2]);
+        int distancia = stoi(tokens[3]);
 
+        Conexion conexion(idCliente, idServidor, velocidad, distancia);
+        grafo.agregarConexion(conexion);
+    }
 
+    return grafo;
+}
 
+int main() {
+    
+    srand(time(NULL));
 
+    int pesoArchivo;
+    int clienteId;
 
+    cout << "Ingrese el peso del archivo (en MB): ";
+    cin >> pesoArchivo;
 
+    cout << "Ingrese el ID del cliente: ";
+    cin >> clienteId;
 
+    // Archivos CSV
+    string archivoServidores = "servidores.csv";
+    string archivoConexiones = "conexiones.csv";
+
+    // Construir el grafo desde los archivos CSV
+    Grafo grafo = construirGrafoDesdeArchivos(archivoServidores, archivoConexiones);
+
+    // Obtener un servidor destino disponible
+    int servidorDestinoId = grafo.obtenerServidorDestino(clienteId);
+
+    if (servidorDestinoId == -1) {
+        // Salir del programa con un código de error si no hay servidores destino disponibles
+        return 1;
+    }
+
+    // Enviar un archivo desde el cliente 0 al servidor destino con un peso de 1200 MB
+    grafo.enviarArchivo(clienteId, servidorDestinoId, pesoArchivo);
 
     return 0;
 }
+
