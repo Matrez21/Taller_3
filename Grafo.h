@@ -92,6 +92,8 @@ public:
         // Calcular la cantidad total de partes que se enviarán
         int velocidadMaxima = obtenerVelocidadMaxima(clienteId, servidorId);
         const int maxTamanoParte = velocidadMaxima;  // Tamaño máximo de cada parte en MB
+
+        // Calcular el número total de partes y el tiempo total
         int numPartesTotal = (pesoArchivo % maxTamanoParte == 0) ? pesoArchivo / maxTamanoParte : pesoArchivo / maxTamanoParte + 1;
 
         cout << "Enviando archivo desde el cliente " << clienteId << " al servidor " << servidorId << "..." << endl;
@@ -100,38 +102,34 @@ public:
 
         for (int i = 0; i < pesoArchivo; i += maxTamanoParte) {
             int tamanoParte = min(maxTamanoParte, pesoArchivo - i);
-            int numPartes = (tamanoParte % maxTamanoParte == 0) ? tamanoParte / maxTamanoParte : tamanoParte / maxTamanoParte + 1;
+            int parteActual = (i / maxTamanoParte) + 1;
 
-            // Simular la conexión de cada parte al servidor
-            for (int j = 0; j < numPartes; ++j) {
-                int parteActual = (i / maxTamanoParte) + j + 1;
-                cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde el cliente " << clienteId
-                    << " al servidor " << servidorId << "...";
+            cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde el cliente " << clienteId
+                << " al servidor " << servidorId << "...";
 
-                if (j < numPartesTotal - 1) {  // Corregir la condición
-                    // Obtener nodo destino para la siguiente parte
-                    int siguienteNodo = obtenerServidorDestino(clienteId);
+            // Obtener nodo destino para la parte actual
+            int siguienteNodo = obtenerServidorDestino(clienteId);
 
-                    // Imprimir ruta con tiempos
-                    cout << "Ruta: ";
-                    imprimirRutaConTiempos(predecesor, siguienteNodo);
-                    int tiempo = obtenerDistanciaEntreNodos(clienteId, siguienteNodo);
-                    cout << " (Tiempo: " << tiempo << " segundos)";
+            // Imprimir ruta con tiempos
+            cout << "Ruta: ";
+            imprimirRutaConTiempos(predecesor, siguienteNodo);
+            int tiempo = obtenerDistanciaEntreNodos(clienteId, siguienteNodo);
+            cout << " (Tiempo: " << tiempo << " segundos)";
 
-                    // Sumar el tiempo al tiempo total
-                    tiempoTotal += tiempo;
-                }
+            // Sumar el tiempo al tiempo total
+            tiempoTotal += tiempo;
 
-                cout << endl;
-            }
+            cout << endl;
         }
 
         // Imprimir mensaje de archivo completo enviado
         cout << "Archivo completo enviado." << endl;
 
         // Imprimir el tiempo total
-        cout << "Tiempo total: " << tiempoTotal << " segundos" << endl;
+        cout << "Tiempo total en enviarse el mensaje: " << tiempoTotal << " segundos" << endl;
     }
+
+
 
 
 
