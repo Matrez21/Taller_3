@@ -66,17 +66,20 @@ Grafo construirGrafoDesdeArchivos(const string& archivoServidores, const string&
 }
 
 int main() {
-    
     srand(time(NULL));
 
     int pesoArchivo;
-    int clienteId;
+    int clienteOrigenId;
+    int nodoDestinoId;
 
     cout << "Ingrese el peso del archivo (en MB): ";
     cin >> pesoArchivo;
 
-    cout << "Ingrese el ID del cliente: ";
-    cin >> clienteId;
+    cout << "Ingrese el ID del cliente de origen: ";
+    cin >> clienteOrigenId;
+
+    cout << "Ingrese el ID del nodo destino: ";
+    cin >> nodoDestinoId;
 
     // Archivos CSV
     string archivoServidores = "servidores.csv";
@@ -85,17 +88,8 @@ int main() {
     // Construir el grafo desde los archivos CSV
     Grafo grafo = construirGrafoDesdeArchivos(archivoServidores, archivoConexiones);
 
-    // Obtener un servidor destino disponible
-    int servidorDestinoId = grafo.obtenerServidorDestino(clienteId);
-
-    if (servidorDestinoId == -1) {
-        // Salir del programa con un código de error si no hay servidores destino disponibles
-        return 1;
-    }
-
-    // Enviar un archivo desde el cliente 0 al servidor destino con un peso de 1200 MB
-    grafo.enviarArchivo(clienteId, servidorDestinoId, pesoArchivo);
+    // Enviar un archivo desde el cliente de origen al nodo destino con el peso especificado
+    grafo.enviarArchivo(clienteOrigenId, nodoDestinoId, pesoArchivo);
 
     return 0;
 }
-
