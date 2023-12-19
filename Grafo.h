@@ -60,26 +60,7 @@ public:
                 }
             }
 
-            cout << "DEBUG: Iteración " << i << endl;
-            cout << "DEBUG: Distancias: ";
-            for (int d : distancia) {
-                cout << d << " ";
-            }
-            cout << endl;
-
-            cout << "DEBUG: Predecesores: ";
-            for (int p : predecesor) {
-                cout << p << " ";
-            }
-            cout << endl;
         }
-
-        // Imprimir predecesores después de la última iteración
-        cout << "DEBUG: Predecesores finales: ";
-        for (int p : predecesor) {
-            cout << p << " ";
-        }
-        cout << endl;
 
         for (const Conexion& conexion : conexiones) {
             int u = conexion.getIdCliente();
@@ -258,8 +239,6 @@ public:
             // Solo imprimir la distancia si es válida
             if (distancia != -1) {
                 cout << " -> (Tiempo: " << distancia << " segundos) -> ";
-            } else {
-                cerr << "DEBUG: No se encontró una conexión válida entre " << nodoAnterior << " y " << nodoActual << endl;
             }
         }
 
