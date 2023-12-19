@@ -54,13 +54,27 @@ Grafo construirGrafoDesdeArchivos(const string& archivoServidores, const string&
         }
 
         int idCliente = stoi(tokens[0]);
-        int idServidor = stoi(tokens[1]);
+        int idRouter = stoi(tokens[1]);
         int velocidad = stoi(tokens[2]);
         int distancia = stoi(tokens[3]);
 
-        Conexion conexion(idCliente, idServidor, velocidad, distancia);
-        grafo.agregarConexion(conexion);
+        // Conexión cliente-router (bidireccional)
+        Conexion conexionCliente(idCliente, idRouter, velocidad, distancia);
+        Conexion conexionRouter(idRouter, idCliente, velocidad, distancia);
+        grafo.agregarConexion(conexionCliente);
+        grafo.agregarConexion(conexionRouter);
+
+        // Conexiones entre routers (bidireccionales)
+        for (const Servidor& router : grafo.getServidores()) {
+            if (router.getId() != idRouter) {
+                Conexion conexionRouterRouter(idRouter, router.getId(), velocidad, distancia);
+                Conexion conexionRouterRouterReversa(router.getId(), idRouter, velocidad, distancia);
+                grafo.agregarConexion(conexionRouterRouter);
+                grafo.agregarConexion(conexionRouterRouterReversa);
+            }
+        }
     }
+
 
     return grafo;
 }
@@ -75,7 +89,7 @@ int main() {
     cout << "Ingrese el peso del archivo (en MB): ";
     cin >> pesoArchivo;
 
-    cout << "Ingrese el ID del cliente de origen: ";
+    cout << "Ingrese el ID del nodo de origen: ";
     cin >> clienteOrigenId;
 
     cout << "Ingrese el ID del nodo destino: ";
