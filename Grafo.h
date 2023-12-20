@@ -111,8 +111,6 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
     int velocidadMaxima = obtenerVelocidadMaxima(clienteOrigenId);
     const int maxTamanoParte = velocidadMaxima;  // Tamaño máximo de cada parte en MB
 
-    cout << "DEBUG: velocidadMaxima = " << velocidadMaxima << ", maxTamanoParte = " << maxTamanoParte << endl;
-
     int tiempoTotal = 0;  // Variable para almacenar el tiempo total
     int numPartesTotal = (pesoArchivo % maxTamanoParte == 0) ? pesoArchivo / maxTamanoParte : pesoArchivo / maxTamanoParte + 1;
 
@@ -120,8 +118,29 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
         int tamanoParte = min(maxTamanoParte, pesoArchivo - i * maxTamanoParte);
         int parteActual = i + 1;
 
-        cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde el cliente " << clienteOrigenId
-            << " al nodo " << nodoDestinoId << "...";
+        cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde ";
+
+        if (esCliente(clienteOrigenId)) {
+            cout << "el cliente " << clienteOrigenId;
+        } else if (esRouter(clienteOrigenId)) {
+            cout << "el router " << clienteOrigenId;
+        } else {
+            cerr << "Tipo de nodo no reconocido para " << clienteOrigenId;
+            return;
+        }
+
+        cout << " al ";
+
+        if (esCliente(nodoDestinoId)) {
+            cout << "cliente " << nodoDestinoId;
+        } else if (esRouter(nodoDestinoId)) {
+            cout << "router " << nodoDestinoId;
+        } else {
+            cerr << "Tipo de nodo no reconocido para " << nodoDestinoId;
+            return;
+        }
+
+        cout << "...";
 
         // Obtener nodo destino para la parte actual
         int siguienteNodoParte = obtenerSiguienteNodoEnRuta(predecesor, clienteOrigenId, nodoDestinoId);
@@ -148,13 +167,9 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
 
 
 
-
-
-
-
-    bool clienteExisteEnArchivo(int clienteId) const {
+    bool esCliente(int nodoId) const {
         for (const Cliente& cliente : clientes) {
-            if (cliente.getId() == clienteId) {
+            if (cliente.getId() == nodoId) {
                 return true;
             }
         }
@@ -163,8 +178,6 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
     }
 
     bool esRouter(int nodoId) const {
-        // Aquí, se asume que los routers tienen conexiones a otros nodos, es decir, no son clientes aislados
-        // Puedes ajustar esta lógica según la estructura real de tus datos
         for (const Conexion& conexion : conexiones) {
             if (conexion.getIdServidor() == nodoId || conexion.getIdCliente() == nodoId) {
                 return true;
@@ -206,25 +219,6 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
         return siguienteNodo;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Dentro de la clase Grafo
     int obtenerServidorDestino(int clienteId) const {
         vector<int> nodosDestino;
@@ -258,12 +252,6 @@ int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
     return -1; // Retorna un valor no válido si no hay conexión entre los nodos
 }
 
-
-
-
-
-
-    // Dentro de la clase Grafo
     void imprimirRutaConTiempos(const vector<int>& predecesor, int nodoActual) const {
         if (nodoActual == -1) {
             return;
@@ -278,16 +266,7 @@ int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
     }
 
 
-    // Dentro de la clase Grafo
-    bool esCliente(int nodoId) const {
-        for (const Cliente& cliente : clientes) {
-            if (cliente.getId() == nodoId) {
-                return true;
-            }
-        }
 
-        return false;
-    }
 
 
 
@@ -299,7 +278,6 @@ private:
     std::vector<Servidor> servidores;
     std::vector<Conexion> conexiones;
 
-    // Dentro de la clase Grafo
     int obtenerVelocidadMaxima(int clienteId) const {
         int velocidadMaxima = 0;
 
