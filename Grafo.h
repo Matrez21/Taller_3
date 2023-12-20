@@ -97,56 +97,60 @@ public:
 
     
 
-    // Dentro de la clase Grafo
-    void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
+void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
+    // Aplicar Bellman-Ford desde el cliente con id proporcionado
+    vector<int> predecesor = bellmanFord(clienteOrigenId);
 
-        // Aplicar Bellman-Ford desde el cliente con id proporcionado
-        vector<int> predecesor = bellmanFord(clienteOrigenId);
-
-        // Verificar si hay ciclos negativos
-        if (predecesor.empty()) {
-            cerr << "No se puede enviar el archivo debido a ciclos negativos." << endl;
-            return;
-        }
-
-        // Calcular la cantidad total de partes que se enviarán
-        int velocidadMaxima = obtenerVelocidadMaxima(clienteOrigenId);
-        const int maxTamanoParte = velocidadMaxima;  // Tamaño máximo de cada parte en MB
-
-        cout << "DEBUG: velocidadMaxima = " << velocidadMaxima << ", maxTamanoParte = " << maxTamanoParte << endl;
-
-        // Resto de la lógica para verificar si el tamaño de la parte es cero...
-        int numPartesTotal = (pesoArchivo % maxTamanoParte == 0) ? pesoArchivo / maxTamanoParte : pesoArchivo / maxTamanoParte + 1;
-        int tiempoTotal = 0;  // Variable para almacenar el tiempo total
-
-        // Imprimir la ruta completa una vez
-        int siguienteNodoCompleto = obtenerSiguienteNodoEnRuta(predecesor, clienteOrigenId, nodoDestinoId);
-        cout << "Ruta completa: ";
-        imprimirRutaCompleta(predecesor, clienteOrigenId, siguienteNodoCompleto);
-
-        for (int i = 0; i < pesoArchivo; i += maxTamanoParte) {
-            int tamanoParte = min(maxTamanoParte, pesoArchivo - i);
-            int parteActual = (i / maxTamanoParte) + 1;
-
-            cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde el cliente " << clienteOrigenId
-                << " al nodo " << nodoDestinoId << "...";
-
-            // Obtener nodo destino para la parte actual
-            int siguienteNodoParte = obtenerSiguienteNodoEnRuta(predecesor, clienteOrigenId, nodoDestinoId);
-
-            // Calcular el tiempo para esta parte y sumarlo al tiempo total
-            int tiempo = obtenerDistanciaEntreNodos(siguienteNodoParte, nodoDestinoId);
-            tiempoTotal += tiempo;
-
-            cout << " (Tiempo: " << tiempo << " segundos)" << endl;
-        }
-
-        // Imprimir mensaje de archivo completo enviado
-        cout << "Archivo completo enviado." << endl;
-
-        // Imprimir el tiempo total
-        cout << "Tiempo total en enviarse el mensaje: " << tiempoTotal << " segundos" << endl;
+    // Verificar si hay ciclos negativos
+    if (predecesor.empty()) {
+        cerr << "No se puede enviar el archivo debido a ciclos negativos." << endl;
+        return;
     }
+
+    // Calcular la cantidad total de partes que se enviarán
+    int velocidadMaxima = obtenerVelocidadMaxima(clienteOrigenId);
+    const int maxTamanoParte = velocidadMaxima;  // Tamaño máximo de cada parte en MB
+
+    cout << "DEBUG: velocidadMaxima = " << velocidadMaxima << ", maxTamanoParte = " << maxTamanoParte << endl;
+
+    int tiempoTotal = 0;  // Variable para almacenar el tiempo total
+    int numPartesTotal = (pesoArchivo % maxTamanoParte == 0) ? pesoArchivo / maxTamanoParte : pesoArchivo / maxTamanoParte + 1;
+
+    for (int i = 0; i < numPartesTotal; ++i) {
+        int tamanoParte = min(maxTamanoParte, pesoArchivo - i * maxTamanoParte);
+        int parteActual = i + 1;
+
+        cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde el cliente " << clienteOrigenId
+            << " al nodo " << nodoDestinoId << "...";
+
+        // Obtener nodo destino para la parte actual
+        int siguienteNodoParte = obtenerSiguienteNodoEnRuta(predecesor, clienteOrigenId, nodoDestinoId);
+
+        // Calcular el tiempo para esta parte y sumarlo al tiempo total
+        int tiempo = obtenerDistanciaEntreNodos(clienteOrigenId, siguienteNodoParte); // Utilizar clienteOrigenId en lugar de siguienteNodoParte
+        tiempoTotal += tiempo;
+
+        cout << " (Tiempo: " << tiempo << " segundos)" << endl;
+    }
+
+    // Imprimir la ruta completa una vez
+    int siguienteNodoCompleto = obtenerSiguienteNodoEnRuta(predecesor, clienteOrigenId, nodoDestinoId);
+    cout << "Ruta completa: ";
+    imprimirRutaCompleta(predecesor, clienteOrigenId, siguienteNodoCompleto);
+
+    // Imprimir mensaje de archivo completo enviado
+    cout << "Archivo completo enviado." << endl;
+
+    // Imprimir el tiempo total
+    cout << "Tiempo total en enviarse el mensaje: " << tiempoTotal << " segundos" << endl;
+}
+
+
+
+
+
+
+
 
     bool clienteExisteEnArchivo(int clienteId) const {
         for (const Cliente& cliente : clientes) {
@@ -177,7 +181,6 @@ public:
             return;
         }
 
-        cout << nodoOrigen << " ";
         imprimirRutaConTiempos(predecesor, nodoDestino);
         cout << endl;
     }
@@ -243,20 +246,20 @@ public:
 
     
 
-    int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
-        for (const Conexion& conexion : conexiones) {
-            if ((conexion.getIdCliente() == nodoOrigen && conexion.getIdServidor() == nodoDestino) ||
-                (conexion.getIdCliente() == nodoDestino && conexion.getIdServidor() == nodoOrigen)) {
-                return conexion.getDistancia();
-            }
+int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
+    for (const Conexion& conexion : conexiones) {
+        if (conexion.getIdCliente() == nodoOrigen) {
+            return conexion.getDistancia();
         }
-
-        cout << "DEBUG: No se encontró una conexión entre " << nodoOrigen << " y " << nodoDestino << endl;
-        for (const Conexion& conexion : conexiones) {
-            cout << "DEBUG: Conexion existente: Cliente " << conexion.getIdCliente() << " - Servidor " << conexion.getIdServidor() << endl;
-        }
-        return -1; // Retorna un valor no válido si no hay conexión entre los nodos
     }
+
+    cout << "DEBUG: No se encontró una conexión entre " << nodoOrigen << " y " << nodoDestino << endl;
+
+    return -1; // Retorna un valor no válido si no hay conexión entre los nodos
+}
+
+
+
 
 
 
@@ -271,17 +274,7 @@ public:
 
         imprimirRutaConTiempos(predecesor, nodoAnterior);
 
-        if (nodoAnterior != -1) {
-            // Obtener la distancia entre nodos
-            int distancia = obtenerDistanciaEntreNodos(nodoAnterior, nodoActual);
-
-            // Solo imprimir la distancia si es válida
-            if (distancia != -1) {
-                cout << " -> (Tiempo: " << distancia << " segundos) -> ";
-            }
-        }
-
-        cout << nodoActual << " ";
+        cout << "-> " <<nodoActual << " ";
     }
 
 
