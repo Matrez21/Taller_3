@@ -10,11 +10,11 @@
 
 using namespace std;
 
-// Funciones para leer archivos CSV y construir el grafo
+
 Grafo construirGrafoDesdeArchivos(const string& archivoServidores, const string& archivoConexiones) {
     Grafo grafo;
 
-    // Leer servidores
+    
     ifstream archivoServ(archivoServidores);
     string lineaServ;
 
@@ -40,7 +40,7 @@ Grafo construirGrafoDesdeArchivos(const string& archivoServidores, const string&
         }
     }
 
-    // Leer conexiones
+   
     ifstream archivoConex(archivoConexiones);
     string lineaConex;
 
@@ -58,13 +58,13 @@ Grafo construirGrafoDesdeArchivos(const string& archivoServidores, const string&
         int velocidad = stoi(tokens[2]);
         int distancia = stoi(tokens[3]);
 
-        // Conexión cliente-router (bidireccional)
+        
         Conexion conexionCliente(idCliente, idRouter, velocidad, distancia);
         Conexion conexionRouter(idRouter, idCliente, velocidad, distancia);
         grafo.agregarConexion(conexionCliente);
         grafo.agregarConexion(conexionRouter);
 
-        // Conexiones entre routers (bidireccionales)
+        
         for (const Servidor& router : grafo.getServidores()) {
             if (router.getId() != idRouter) {
                 Conexion conexionRouterRouter(idRouter, router.getId(), velocidad, distancia);
@@ -95,14 +95,14 @@ int main() {
     cout << "Ingrese el ID del nodo destino: ";
     cin >> nodoDestinoId;
 
-    // Archivos CSV
+    
     string archivoServidores = "servidores.csv";
     string archivoConexiones = "conexiones.csv";
 
-    // Construir el grafo desde los archivos CSV
+   
     Grafo grafo = construirGrafoDesdeArchivos(archivoServidores, archivoConexiones);
 
-    // Enviar un archivo desde el cliente de origen al nodo destino con el peso especificado
+   
     grafo.enviarArchivo(clienteOrigenId, nodoDestinoId, pesoArchivo);
 
     return 0;
