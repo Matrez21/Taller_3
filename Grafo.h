@@ -158,11 +158,21 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
     cout << "Ruta completa: ";
     imprimirRutaCompleta(predecesor, clienteOrigenId, siguienteNodoCompleto);
 
-    // Imprimir mensaje de archivo completo enviado
-    cout << "Archivo completo enviado." << endl;
+    if(esCliente(nodoDestinoId)) {
+        // Imprimir mensaje de mensaje completo enviado
+        cout << "Mensaje completo enviado." << endl;
+        // Imprimir el tiempo total
+        cout << "Tiempo total en enviarse el mensaje: " << tiempoTotal << " segundos" << endl;
+    }else if(esRouter(nodoDestinoId)) {
+        // Imprimir mensaje de archivo completo enviado
+        cout << "Archivo completo enviado." << endl;
+        // Imprimir el tiempo total
+        cout << "Tiempo total en enviarse el archivo: " << tiempoTotal << " segundos" << endl;
+    }
+    
+    
 
-    // Imprimir el tiempo total
-    cout << "Tiempo total en enviarse el mensaje: " << tiempoTotal << " segundos" << endl;
+
 }
 
 
