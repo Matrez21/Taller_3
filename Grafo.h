@@ -17,6 +17,7 @@ using namespace std;
 
 class Grafo {
 public:
+ // Funciones para agregar clientes, servidores y conexiones al grafo
     void agregarCliente(const Cliente& cliente) {
         clientes.push_back(cliente);
     }
@@ -28,7 +29,7 @@ public:
     void agregarConexion(const Conexion& conexion) {
         conexiones.push_back(conexion);
     }
-
+ // Obtener la lista de clientes, servidores y conexiones del grafo
     const vector<Cliente>& getClientes() const {
         return clientes;
     }
@@ -40,7 +41,7 @@ public:
     const vector<Conexion>& getConexiones() const {
         return conexiones;
     }
-
+ // Implementación del algoritmo Bellman-Ford para encontrar rutas más cortas
     vector<int> bellmanFord(int source) {
         int numNodos = clientes.size() + servidores.size();
         vector<int> distancia(numNodos, numeric_limits<int>::max());
@@ -96,7 +97,7 @@ public:
 
 
     
-
+// Función principal para enviar un archivo desde un cliente a un nodo destino
 void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
     // Aplicar Bellman-Ford desde el cliente con id proporcionado
     vector<int> predecesor = bellmanFord(clienteOrigenId);
@@ -119,7 +120,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
         int parteActual = i + 1;
 
         cout << "Enviando parte " << parteActual << " de " << numPartesTotal << " desde ";
-
+        // Determinar si el nodo de origen es un cliente o un router
         if (esCliente(clienteOrigenId)) {
             cout << "el cliente " << clienteOrigenId;
         } else if (esRouter(clienteOrigenId)) {
@@ -130,7 +131,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
         }
 
         cout << " al ";
-
+        // Determinar si el nodo destino es un cliente o un router
         if (esCliente(nodoDestinoId)) {
             cout << "cliente " << nodoDestinoId;
         } else if (esRouter(nodoDestinoId)) {
@@ -166,7 +167,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
 
 
 
-
+    // Función para verificar si un nodo es un cliente
     bool esCliente(int nodoId) const {
         for (const Cliente& cliente : clientes) {
             if (cliente.getId() == nodoId) {
@@ -176,7 +177,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
 
         return false;
     }
-
+    // Función para verificar si un nodo es un router
     bool esRouter(int nodoId) const {
         for (const Conexion& conexion : conexiones) {
             if (conexion.getIdServidor() == nodoId || conexion.getIdCliente() == nodoId) {
@@ -187,7 +188,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
         return false;
     }
 
-
+    // Función para imprimir la ruta completa desde el cliente hasta el nodo destino
     void imprimirRutaCompleta(const vector<int>& predecesor, int nodoOrigen, int nodoDestino) const {
         if (nodoDestino == -1) {
             cerr << "No se encontró una conexión válida entre " << nodoOrigen << " y el destino." << endl;
@@ -199,7 +200,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
     }
 
 
-    
+    // Función para obtener el siguiente nodo en la ruta desde el cliente hasta el nodo destino
     int obtenerSiguienteNodoEnRuta(const vector<int>& predecesor, int clienteOrigenId, int nodoDestinoId) {
         int siguienteNodo = predecesor[nodoDestinoId];
 
@@ -219,7 +220,7 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
         return siguienteNodo;
     }
 
-    
+    // Función para obtener un servidor destino aleatorio para un cliente
     int obtenerServidorDestino(int clienteId) const {
         vector<int> nodosDestino;
 
@@ -239,19 +240,19 @@ void enviarArchivo(int clienteOrigenId, int nodoDestinoId, int pesoArchivo) {
     }
 
     
-
-int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
-    for (const Conexion& conexion : conexiones) {
-        if (conexion.getIdCliente() == nodoOrigen) {
-            return conexion.getDistancia();
+    // Función para obtener la distancia entre dos nodos
+    int obtenerDistanciaEntreNodos(int nodoOrigen, int nodoDestino) const {
+        for (const Conexion& conexion : conexiones) {
+            if (conexion.getIdCliente() == nodoOrigen) {
+                return conexion.getDistancia();
+            }
         }
+
+        cout << "DEBUG: No se encontró una conexión entre " << nodoOrigen << " y " << nodoDestino << endl;
+
+        return -1; // Retorna un valor no válido si no hay conexión entre los nodos
     }
-
-    cout << "DEBUG: No se encontró una conexión entre " << nodoOrigen << " y " << nodoDestino << endl;
-
-    return -1; // Retorna un valor no válido si no hay conexión entre los nodos
-}
-
+    // Función para imprimir la ruta con tiempos desde el nodo actual hasta el nodo destino
     void imprimirRutaConTiempos(const vector<int>& predecesor, int nodoActual) const {
         if (nodoActual == -1) {
             return;
@@ -277,7 +278,8 @@ private:
     std::vector<Cliente> clientes;
     std::vector<Servidor> servidores;
     std::vector<Conexion> conexiones;
-
+    
+    // Función para obtener la velocidad máxima de conexión de un cliente
     int obtenerVelocidadMaxima(int clienteId) const {
         int velocidadMaxima = 0;
 
